@@ -1,0 +1,25 @@
+{
+  "mcpServers": {
+    "scorai": {
+      "command": "node",
+      "args": ["bin/scorai-mcp.js"],
+      "env": {
+        "NODE_ENV": "production"
+      },
+      "metadata": {
+        "name": "SCOR AI",
+        "version": "4.0.0",
+        "description": "AI-Powered Cybersecurity Pentesting Arsenal — 24 tools across Recon, Web Security, Secrets, Cloud, AI/LLM, and Compliance",
+        "tools_count": 24,
+        "categories": [
+          "reconnaissance",
+          "web_security",
+          "auth_secrets",
+          "cloud_infrastructure",
+          "ai_llm_security",
+          "reporting"
+        ]
+      }
+    }
+  }
+}

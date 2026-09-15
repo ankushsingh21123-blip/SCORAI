@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SCOR AI MCP v4.0 — Live Terminal & Pentesting Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #090a0f;
+      --card-bg: rgba(18, 20, 29, 0.85);
+      --border: rgba(255, 255, 255, 0.1);
+      --primary: #6366f1;
+      --cyan: #06b6d4;
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.12) 0%, transparent 45%),
+        radial-gradient(circle at 85% 85%, rgba(6, 182, 212, 0.1) 0%, transparent 45%),
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 20px;
+    }
+
+    header {
+      text-align: center;
+      max-width: 800px;
+      margin-bottom: 28px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.35);
+      color: #a5b4fc;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    .badge-dot {
+      width: 8px;
+      height: 8px;
+      background: #10b981;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #10b981;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.85); }
+    }
+    h1 {
+      font-size: 34px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #ffffff 40%, #a5b4fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+    p.subtitle {
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1000px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+
+    /* Terminal window */
+    .terminal-card {
+      background: #0d1117;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 14px;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.7), 0 0 30px rgba(99, 102, 241, 0.15);
+      overflow: hidden;
+    }
+    .terminal-header {
+      background: #161b22;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .terminal-dots {
+      display: flex;
+      gap: 8px;
+    }
+    .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+    .dot-red { background: #ff5f56; }
+    .dot-yellow { background: #ffbd2e; }
+    .dot-green { background: #27c93f; }
+    .terminal-title {
+      font-family: 'Fira Code', monospace;
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .terminal-body {
+      padding: 20px;
+      font-family: 'Fira Code', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #e2e8f0;
+      min-height: 380px;
+      max-height: 480px;
+      overflow-y: auto;
+    }
+    .line { margin-bottom: 6px; display: flex; align-items: flex-start; gap: 8px; }
+    .prompt { color: #06b6d4; font-weight: 600; flex-shrink: 0; }
+    .cmd { color: #f8fafc; font-weight: 600; }
+    .dim { color: #64748b; }
+    .cyan { color: #38bdf8; }
+    .green { color: #34d399; }
+    .yellow { color: #fbbf24; }
+    .red { color: #f87171; }
+    .purple { color: #c084fc; }
+
+    /* Interactive controls */
+    .controls-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .btn-tool {
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: #f1f5f9;
+      font-family: 'Fira Code', monospace;
+      font-size: 12px;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .btn-tool:hover, .btn-tool.active {
+      background: rgba(99, 102, 241, 0.25);
+      border-color: #818cf8;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+    }
+    .btn-tool .btn-title {
+      font-weight: 700;
+      color: #a5b4fc;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-tool .btn-desc {
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* Output dashboard cards */
+    .output-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .metric-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      transition: border 0.3s;
+    }
+    .metric-card.active {
+      border-color: #6366f1;
+    }
+    .metric-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .metric-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .metric-val {
+      font-size: 26px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .metric-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="badge">
+      <span class="badge-dot"></span>
+      Model Context Protocol v4.0 Active
+    </div>
+    <h1>SCOR AI Pentesting Arsenal</h1>
+    <p class="subtitle">24 Live Security Tools connected via MCP Stdio protocol to Claude Code, Cursor, and LLM Agents.</p>
+  </header>
+
+  <div class="container">
+    
+    <!-- Interactive Terminal -->
+    <div class="terminal-card">
+      <div class="terminal-header">
+        <div class="terminal-dots">
+          <div class="dot dot-red"></div>
+          <div class="dot dot-yellow"></div>
+          <div class="dot dot-green"></div>
+        </div>
+        <div class="terminal-title">⚡ claude-code — scorai-mcp (stdio)</div>
+        <div style="font-size: 11px; color: #10b981;">● CONNECTED (24 TOOLS)</div>
+      </div>
+
+      <div class="terminal-body" id="terminal-content">
+        <div class="line"><span class="prompt">$</span> <span class="cmd">claude mcp add scorai node ./bin/scorai-mcp.js</span></div>
+        <div class="line dim">[SCOR AI] MCP Server v4.0 running — 24 tools loaded over stdio</div>
+        <div class="line dim">[SCOR AI] Registering tools: scorai_full_pentest, scorai_jwt_audit, scorai_secret_scan, scorai_compliance_map...</div>
+        <div class="line green">✔ Successfully connected SCOR AI MCP server to Claude agent.</div>
+        <div class="line">&nbsp;</div>
+        <div class="line"><span class="prompt">Claude &gt;</span> <span class="cmd">scorai_full_pentest { target: "truscore.io", scope: "deep" }</span></div>
+        <div class="line cyan">⚡ [1/6] Running Subdomain &amp; DNS Reconnaissance (crt.sh + brute)...</div>
+        <div class="line">  ├── Discovered: <span class="yellow">api.truscore.io</span> (104.21.48.12)</div>
+        <div class="line">  ├── Discovered: <span class="yellow">auth.truscore.io</span> (104.21.48.13)</div>
+        <div class="line">  └── Discovered: <span class="yellow">staging.truscore.io</span> (104.21.48.14)</div>
+        <div class="line cyan">⚡ [2/6] Probing SSL &amp; Security Headers...</div>
+        <div class="line">  ├── TLS 1.3: <span class="green">VALID</span> (ECDHE-RSA-AES256-GCM-SHA384)</div>
+        <div class="line">  ├── HSTS: <span class="green">PRESENT</span> (max-age=31536000; includeSubDomains)</div>
+        <div class="line">  └── CSP: <span class="yellow">REPORT-ONLY</span> (Missing strict frame-ancestors)</div>
+        <div class="line cyan">⚡ [3/6] Static Secret Scanner (40+ AST regex patterns)...</div>
+        <div class="line">  └── Verified 0 leaked keys in public bundles.</div>
+        <div class="line cyan">⚡ [4/6] AI/LLM Security (Watson Reasoner + MITRE ATLAS)...</div>
+        <div class="line">  └── Prompt Injection Defense: <span class="green">PASS (98.4% Resilience)</span></div>
+        <div class="line cyan">⚡ [5/6] TAFAAR SRS Scoring Algorithm...</div>
+        <div class="line">  └── <span class="purple">Trust Score: 780 / 850 (Grade: A / Enterprise Ready)</span></div>
+        <div class="line cyan">⚡ [6/6] Multi-Niche Output Generation...</div>
+        <div class="line green">✔ Pentest complete in 1.42s. Full multi-stakeholder report generated below.</div>
+      </div>
+    </div>
+
+    <!-- Tool Selector Buttons -->
+    <div class="controls-grid">
+      <button class="btn-tool active" id="btn-full" onclick="runDemo('full')">
+        <span class="btn-title">🛡️ scorai_full_pentest</span>
+        <span class="btn-desc">Orchestrates all 24 tools in one execution</span>
+      </button>
+
+      <button class="btn-tool" id="btn-jwt" onclick="runDemo('jwt')">
+        <span class="btn-title">🔑 scorai_jwt_audit</span>
+        <span class="btn-desc">Audits alg:none, weak keys, expiration</span>
+      </button>
+
+      <button class="btn-tool" id="btn-secrets" onclick="runDemo('secrets')">
+        <span class="btn-title">🔎 scorai_secret_scan</span>
+        <span class="btn-desc">40+ pattern secret & token detection</span>
+      </button>
+
+      <button class="btn-tool" id="btn-compliance" onclick="runDemo('compliance')">
+        <span class="btn-title">📋 scorai_compliance_map</span>
+        <span class="btn-desc">OWASP, SOC2, PCI-DSS, ISO42001 mapping</span>
+      </button>
+    </div>
+
+    <!-- Multi-Stakeholder Output Cards -->
+    <div class="output-grid">
+      <div class="metric-card active">
+        <div class="metric-header">
+          <span class="metric-title">👔 Founder Report</span>
+          <span style="color: #10b981; font-weight: 700; font-size: 12px;">READY</span>
+        </div>
+        <div class="metric-val" style="color: #34d399;">780<span style="font-size: 16px; color: var(--muted);">/850</span></div>
+        <div class="metric-sub">Commercial Moat: <strong style="color: #f8fafc;">Enterprise Procurement Ready</strong></div>
+        <div class="metric-sub" style="margin-top: 6px;">Revenue Risk: <strong style="color: #34d399;">$0 Friction</strong></div>
+      </div>
+
+      <div class="metric-card active">
+        <div class="metric-header">
+          <span class="metric-title">💼 Investor Diligence</span>
+          <span style="color: #38bdf8; font-weight: 700; font-size: 12px;">TIER 1</span>
+        </div>
+        <div class="metric-val" style="color: #38bdf8;">$25K</div>
+        <div class="metric-sub">Probable Max Loss: <strong style="color: #f8fafc;">Low Underwriting Risk</strong></div>
+        <div class="metric-sub" style="margin-top: 6px;">Insurability: <strong style="color: #38bdf8;">APPROVED</strong></div>
+      </div>
+
+      <div class="metric-card active">
+        <div class="metric-header">
+          <span class="metric-title">💻 Developer Action</span>
+          <span style="color: #fbbf24; font-weight: 700; font-size: 12px;">1 FIX</span>
+        </div>
+        <div class="metric-val" style="color: #fbbf24;">45m</div>
+        <div class="metric-sub">Fast-track fix: <strong style="color: #f8fafc;">Add strict CSP frame-ancestors</strong></div>
+        <div class="metric-sub" style="margin-top: 6px;">Auto-remediation code provided</div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function runDemo(type) {
+      document.querySelectorAll('.btn-tool').forEach(b => b.classList.remove('active'));
+      const btn = document.getElementById('btn-' + type);
+      if (btn) btn.classList.add('active');
+
+      const term = document.getElementById('terminal-content');
+      
+      if (type === 'jwt') {
+        term.innerHTML = `
+          <div class="line"><span class="prompt">Claude &gt;</span> <span class="cmd">scorai_jwt_audit { token: "eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIn0." }</span></div>
+          <div class="line yellow">⚡ Decoding header &amp; payload segments...</div>
+          <div class="line">  ├── Header: <span class="red">{"alg": "none", "typ": "JWT"}</span></div>
+          <div class="line">  └── Payload: {"sub": "1234567890", "name": "John Doe"}</div>
+          <div class="line red">❌ CRITICAL VULNERABILITY FOUND: alg:none attack vector detected</div>
+          <div class="line red">❌ Issue: Token signature verification bypassed entirely</div>
+          <div class="line yellow">⚠️ Warning: Missing 'exp' (expiration) timestamp</div>
+          <div class="line">&nbsp;</div>
+          <div class="line cyan">💡 Actionable Developer Fix:</div>
+          <div class="line green">  └── Enforce algorithm whitelist: jwt.verify(token, secret, { algorithms: ['RS256', 'HS256'] })</div>
+        `;
+      } else if (type === 'secrets') {
+        term.innerHTML = `
+          <div class="line"><span class="prompt">Claude &gt;</span> <span class="cmd">scorai_secret_scan { target: "./src" }</span></div>
+          <div class="line cyan">⚡ Scanning AST and text for 40+ high-entropy credential signatures...</div>
+          <div class="line">  ├── Checked 142 source files in 48ms</div>
+          <div class="line green">✔ 0 exposed OpenAI keys (sk-...)</div>
+          <div class="line green">✔ 0 exposed AWS Secret Access keys</div>
+          <div class="line green">✔ 0 hardcoded database connection strings</div>
+          <div class="line green">✔ Secret Posture: 100% CLEAN — No commits flagged.</div>
+        `;
+      } else if (type === 'compliance') {
+        term.innerHTML = `
+          <div class="line"><span class="prompt">Claude &gt;</span> <span class="cmd">scorai_compliance_map { standards: ["OWASP_TOP10", "SOC2_TYPE2", "ISO42001"] }</span></div>
+          <div class="line cyan">⚡ Mapping 24 automated pentest signals to compliance controls...</div>
+          <div class="line">  ├── <span class="green">OWASP A01-A10</span>: 100% Coverage (Injection, Cryptographic Failures, SSRF tested)</div>
+          <div class="line">  ├── <span class="green">SOC2 CC6.1, CC6.6, CC7.1</span>: Compliant — TLS 1.3 &amp; token rotation validated</div>
+          <div class="line">  └── <span class="green">ISO/IEC 42001 AI Risk</span>: Compliant — Prompt injection &amp; output validation active</div>
+          <div class="line green">✔ Ready for export: Generated audit-ready PDF/Markdown proof package.</div>
+        `;
+      } else {
+        term.innerHTML = `
+          <div class="line"><span class="prompt">$</span> <span class="cmd">claude mcp add scorai node ./bin/scorai-mcp.js</span></div>
+          <div class="line dim">[SCOR AI] MCP Server v4.0 running — 24 tools loaded over stdio</div>
+          <div class="line green">✔ Successfully connected SCOR AI MCP server to Claude agent.</div>
+          <div class="line">&nbsp;</div>
+          <div class="line"><span class="prompt">Claude &gt;</span> <span class="cmd">scorai_full_pentest { target: "truscore.io", scope: "deep" }</span></div>
+          <div class="line cyan">⚡ [1/6] Running Subdomain &amp; DNS Reconnaissance (crt.sh + brute)...</div>
+          <div class="line">  ├── Discovered: <span class="yellow">api.truscore.io</span> (104.21.48.12)</div>
+          <div class="line">  └── Discovered: <span class="yellow">auth.truscore.io</span> (104.21.48.13)</div>
+          <div class="line cyan">⚡ [2/6] Probing SSL &amp; Security Headers... <span class="green">TLS 1.3 PASS</span></div>
+          <div class="line cyan">⚡ [3/6] Static Secret Scanner... <span class="green">0 LEAKS FOUND</span></div>
+          <div class="line cyan">⚡ [4/6] AI/LLM Security (Watson Reasoner)... <span class="green">98.4% RESILIENCE</span></div>
+          <div class="line cyan">⚡ [5/6] TAFAAR SRS Scoring Algorithm... <span class="purple">Score: 780/850 (Grade A)</span></div>
+          <div class="line green">✔ Pentest complete in 1.42s. Full multi-stakeholder report ready.</div>
+        `;
+      }
+    }
+  </script>
+</body>
+</html>
