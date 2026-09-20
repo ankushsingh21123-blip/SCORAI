@@ -84,7 +84,7 @@ Integrate our 24-tool MCP arsenal seamlessly into your local development environ
 **SCOR AI V3 is officially LIVE!** 
 Visit our website to see the engine in action, learn more about our actuarial standard, and secure your AI deployments today.
 
-👉 **[Visit SCOR AI Website](https://scorai.org)**
+👉 **[Visit SCOR AI Website](https://scorai-platform.vercel.app/)**
 
 ---
 
